@@ -364,3 +364,142 @@ Reference :
 [Queries and Mutations](https://graphql.org/learn/queries/#directives)
 
 ## Mutations
+
+It’s useful to establish a convention that any operations that cause writes should be sent explicitly via a mutation
+
+This can be useful for fetching the new state of an object after an update.
+
+simple example mutation:
+
+```graphql
+mutation CreateReviewForEpisode($ep: Episode!, $review: ReviewInput!) {
+  createReview(episode: $ep, review: $review) {
+    stars
+    commentary
+  }
+}
+
+# VARIABLES
+{
+  "ep": "JEDI",
+  "review": {
+    "stars": 5,
+    "commentary": "This is a great movie!"
+  }
+}
+
+# RESULT
+{
+  "data": {
+    "createReview": {
+      "stars": 5,
+      "commentary": "This is a great movie!"
+    }
+  }
+}
+```
+
+Note how `createReview` field returns the `stars` and `commentary` fields of the newly created review. This is especially useful when mutating existing data, for example, when incrementing a field, since we can mutate and query the new value of the field with on request
+
+You might also notice that, in this example, the `review` variable we passed in is not a scalar. it’s an **input object type**, a special kind of object type that can be passed in as an argument.
+
+### Multiple fields in mutations
+
+A mutation can contain multiple fields, just like a query. There’s one important distinction between queries and mutations, other than the name:
+
+**While query fields are executed in parallel, mutation fields run in series, one after the other.**
+
+This means that if we send two `incrementCredits` mutations in one request, the first is guaranteed to finish before the second begins, ensuring that we don’t end up with a race condition with ourselves.
+
+Reference :
+
+[Queries and Mutations](https://graphql.org/learn/queries/#mutations)
+
+## Inline Fragments
+
+if you are querying a field that returns an interface or a union type, you will need to use **inline fragments** to access data on the underlying concrete type.
+
+It’s easiest to see with an example:
+
+```graphql
+query HeroForEpisode($ep: Episode!) {
+  hero(episode: $ep) {
+    name
+    ... on Droid {
+      primaryFunction
+    }
+    ... on Human {
+      height
+    }
+  }
+}
+
+# VARUABLES
+{
+  "ep": "JEDI"
+}
+
+# RESULT
+{
+  "data": {
+    "hero": {
+      "name": "R2-D2",
+      "primaryFunction": "Astromech"
+    }
+  }
+}
+```
+
+In this query, the `hero` field returns the type `Character` ,which might be either a `Human` or a `Droid` depending on the `episode` argument. In the direct selection, you can only ask for fields that exist on the `Character` interface, such as `name` .
+
+To ask for a field on the concrete type, you need to use an **inline fragment** with a type condition. Because the first fragment is labeled as `... on Droid` , the `primaryFunction` field will only be executed if the `Character` returned from `hero` is of the `Droid` type.
+
+### Meta fields
+
+GraphQL allows you to request `__typename` , a meta field, at any point in a query to get the name of the object type at that point.
+
+```graphql
+{
+  search(text: "an") {
+    __typename
+    ... on Human {
+      name
+    }
+    ... on Droid {
+      name
+    }
+    ... on Starship {
+      name
+    }
+  }
+}
+
+# Result
+
+{
+  "data": {
+    "search": [
+      {
+        "__typename": "Human",
+        "name": "Han Solo"
+      },
+      {
+        "__typename": "Human",
+        "name": "Leia Organa"
+      },
+      {
+        "__typename": "Starship",
+        "name": "TIE Advanced x1"
+      }
+    ]
+  }
+}
+```
+
+In the above query, `search` returns a union type that can be one of three options.
+
+It would be impossible to tell aprat the different types from the client without the `__typename` field.
+
+Reference :
+
+[Queries and Mutations](https://graphql.org/learn/queries/#inline-fragments)
