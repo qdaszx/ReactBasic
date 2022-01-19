@@ -1,5 +1,12 @@
+import FoodList from "./components/FoodList";
+import items from "./mock.json";
+
 const App = () => {
-  return <div>Hello World!</div>;
+  return (
+    <>
+      <FoodList items={items} />
+    </>
+  );
 };
 
 export default App;
