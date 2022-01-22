@@ -1,9 +1,10 @@
 import ReviewList from "./components/ReviewList";
-import mockItems from "../src/mock.json";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
+import { getReviews } from "./api";
 
 const App = () => {
-  const [items, setItems] = useState(mockItems);
+  const [items, setItems] = useState([]);
   const [order, setOrder] = useState("createdAt");
   const [direction, setDirection] = useState(1);
   const sortedItems = items.sort((a, b) => direction * (b[order] - a[order]));
@@ -28,6 +29,15 @@ const App = () => {
     const nextItems = items.filter((item) => item.id !== id);
     setItems(nextItems);
   };
+
+  const handleLoad = async () => {
+    const { reviews } = await getReviews();
+    setItems(reviews);
+  };
+
+  useEffect(() => {
+    handleLoad();
+  }, []);
 
   return (
     <div>
