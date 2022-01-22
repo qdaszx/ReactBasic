@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getFoods } from "./api";
 import FoodList from "./components/FoodList";
-import mockItems from "./mock.json";
 
 const App = () => {
-  const [items, setItems] = useState(mockItems);
+  const [items, setItems] = useState([]);
   const [order, setOrder] = useState("createdAt");
   const [direction, setDirection] = useState(1);
 
@@ -30,6 +30,15 @@ const App = () => {
     const filteredItems = items.filter((item) => item.id !== id);
     setItems(filteredItems);
   };
+
+  const handleLoad = async () => {
+    const { foods } = await getFoods();
+    setItems(foods);
+  };
+
+  useEffect(() => {
+    handleLoad();
+  }, []);
 
   return (
     <>
