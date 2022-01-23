@@ -3,9 +3,13 @@ import ReviewList from "./components/ReviewList";
 import { useEffect, useState } from "react";
 import { getReviews } from "./api";
 
+const LIMIT = 6;
+
 const App = () => {
   const [items, setItems] = useState([]);
   const [order, setOrder] = useState("createdAt");
+  const [offset, setOffset] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
   const [direction, setDirection] = useState(1);
   const sortedItems = items.sort((a, b) => direction * (b[order] - a[order]));
 
@@ -30,13 +34,23 @@ const App = () => {
     setItems(nextItems);
   };
 
-  const handleLoad = async (orderQuery) => {
-    const { reviews } = await getReviews(orderQuery);
-    setItems(reviews);
+  const handleLoad = async (options) => {
+    const { reviews, paging } = await getReviews(options);
+    if (options.offset === 0) {
+      setItems(reviews);
+    } else {
+      setItems((prevItems) => [...prevItems, ...reviews]);
+    }
+    setOffset(options.offset + reviews.length);
+    setHasNext(paging.hasNext);
+  };
+
+  const handleLoadMore = () => {
+    handleLoad({ order, offset, limit: LIMIT });
   };
 
   useEffect(() => {
-    handleLoad(order);
+    handleLoad({ order, offset: 0, limit: LIMIT });
   }, [order]);
 
   return (
@@ -48,6 +62,7 @@ const App = () => {
         <button onClick={handleWorstClick}>웨스트순</button>
       </div>
       <ReviewList items={sortedItems} onDelete={handleDelete} />
+      {hasNext && <button onClick={handleLoadMore}>더 보기</button>}
     </div>
   );
 };
