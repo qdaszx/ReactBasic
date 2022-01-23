@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import { getFoods } from "./api";
 import FoodList from "./components/FoodList";
 
+const LIMIT = 10;
+
 const App = () => {
   const [items, setItems] = useState([]);
   const [order, setOrder] = useState("createdAt");
+  const [nextCursor, setNextCursor] = useState(null);
   const [direction, setDirection] = useState(1);
 
   const sortedItems = items.sort((a, b) => direction * (b[order] - a[order]));
@@ -31,13 +34,22 @@ const App = () => {
     setItems(filteredItems);
   };
 
-  const handleLoad = async (orderQuery) => {
-    const { foods } = await getFoods(orderQuery);
-    setItems(foods);
+  const handleLoad = async (options) => {
+    const { foods, paging } = await getFoods(options);
+    if (nextCursor) {
+      setItems((prevItems) => [...prevItems, ...foods]);
+    } else {
+      setItems(foods);
+    }
+    setNextCursor(paging.nextCursor);
+  };
+
+  const handleLoadMore = () => {
+    handleLoad({ order, nextCursor, limit: LIMIT });
   };
 
   useEffect(() => {
-    handleLoad(order);
+    handleLoad({ order, limit: LIMIT });
   }, [order]);
 
   return (
@@ -49,6 +61,7 @@ const App = () => {
         <button onClick={handleLowCalorieClick}>낮은 칼로리순</button>
       </div>
       <FoodList items={sortedItems} onDelete={handleDeleteClick} />
+      {nextCursor && <button onClick={handleLoadMore}>더 보기</button>}
     </>
   );
 };
