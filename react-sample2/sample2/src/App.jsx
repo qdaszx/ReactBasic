@@ -9,6 +9,8 @@ const App = () => {
   const [order, setOrder] = useState("createdAt");
   const [nextCursor, setNextCursor] = useState(null);
   const [direction, setDirection] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingError, setLoadingError] = useState(null);
 
   const sortedItems = items.sort((a, b) => direction * (b[order] - a[order]));
 
@@ -35,7 +37,18 @@ const App = () => {
   };
 
   const handleLoad = async (options) => {
-    const { foods, paging } = await getFoods(options);
+    let result;
+    try {
+      setIsLoading(true);
+      setLoadingError(null);
+      result = await getFoods(options);
+    } catch (error) {
+      setLoadingError(error);
+      return;
+    } finally {
+      setIsLoading(false);
+    }
+    const { foods, paging } = result;
     if (nextCursor) {
       setItems((prevItems) => [...prevItems, ...foods]);
     } else {
@@ -61,7 +74,12 @@ const App = () => {
         <button onClick={handleLowCalorieClick}>낮은 칼로리순</button>
       </div>
       <FoodList items={sortedItems} onDelete={handleDeleteClick} />
-      {nextCursor && <button onClick={handleLoadMore}>더 보기</button>}
+      {nextCursor && (
+        <button disabled={isLoading} onClick={handleLoadMore}>
+          더 보기
+        </button>
+      )}
+      {loadingError?.message && <span>{loadingError.message}</span>}
     </>
   );
 };
