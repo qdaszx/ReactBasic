@@ -57,8 +57,8 @@ Task.propTypes = {
     /** Current state of the task */
     state: PropTypes.string.isRequired,
   }),
-  /** Event to chage the task to archived */
+  /** Event to change the task to archived */
   onArchiveTask: PropTypes.func,
-  /** Event to chage the task to pinned */
+  /** Event to change the task to pinned */
   onPinTask: PropTypes.func,
 };
